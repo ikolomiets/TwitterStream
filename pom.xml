@@ -11,7 +11,7 @@
     <dependencies>
         <dependency>
             <groupId>org.twitter4j</groupId>
-            <artifactId>twitter4j-core</artifactId>
+            <artifactId>twitter4j-stream</artifactId>
             <version>[3.0,)</version>
         </dependency>
     </dependencies>
