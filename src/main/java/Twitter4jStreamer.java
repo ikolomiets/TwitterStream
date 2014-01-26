@@ -3,17 +3,14 @@ import twitter4j.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class Streamer {
+public class Twitter4jStreamer {
 
     private static DateFormat dateFormat = new SimpleDateFormat("HH:mm");
 
     public static void main(String[] args) throws TwitterException {
-
         Twitter twitter = TwitterFactory.getSingleton();
-
 
         List<Long> userIdList = new ArrayList<Long>();
         for (String arg : args) {

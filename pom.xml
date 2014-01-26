@@ -14,6 +14,16 @@
             <artifactId>twitter4j-stream</artifactId>
             <version>[3.0,)</version>
         </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>hbc-core</artifactId>
+            <version>1.4.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.2</version>
+        </dependency>
     </dependencies>
 
     <!-- mvn assembly:assembly -->
@@ -27,7 +37,8 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>Streamer</mainClass>
+                            <!--<mainClass>Twitter4jStreamer</mainClass>-->
+                            <mainClass>HbcStreamer</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
