@@ -57,8 +57,28 @@ public class Twitter4jStreamer {
                     }
 
                     public void onException(Exception ex) {
-                        logger.error("StreamListener.onException", ex);
+                        logger.error("onException", ex);
                         observer.onError(ex);
+                    }
+
+                    @Override
+                    public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
+                        logger.warn("onDeletionNotice: " + statusDeletionNotice.toString());
+                    }
+
+                    @Override
+                    public void onTrackLimitationNotice(int numberOfLimitedStatuses) {
+                        logger.warn("onTrackLimitationNotice: numberOfLimitedStatuses=" + numberOfLimitedStatuses);
+                    }
+
+                    @Override
+                    public void onScrubGeo(long userId, long upToStatusId) {
+                        logger.warn("onScrubGeo: userId=" + userId + ", upToStatusId=" + upToStatusId);
+                    }
+
+                    @Override
+                    public void onStallWarning(StallWarning warning) {
+                        logger.warn("onStallWarning: " + warning.toString());
                     }
                 });
 
