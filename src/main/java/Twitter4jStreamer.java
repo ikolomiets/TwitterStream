@@ -1,3 +1,5 @@
+import org.slf4j.Logger;
+import org.slf4j.impl.SimpleLoggerFactory;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
@@ -16,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Twitter4jStreamer {
 
+    private static Logger logger = new SimpleLoggerFactory().getLogger(Twitter4jStreamer.class.getName());
     private static DateFormat dateFormat = new SimpleDateFormat("HH:mm");
 
     public static void main(String[] args) throws TwitterException {
@@ -28,7 +31,7 @@ public class Twitter4jStreamer {
 
             String screenName = arg.substring(1);
             User user = twitter.users().showUser(screenName);
-            System.out.println("Resolve " + arg + " to " + user.getId());
+            logger.info("Resolve " + arg + " to " + user.getId());
             userIdList.add(user.getId());
         }
 
@@ -54,6 +57,7 @@ public class Twitter4jStreamer {
                     }
 
                     public void onException(Exception ex) {
+                        logger.error("StreamListener.onException", ex);
                         observer.onError(ex);
                     }
                 });

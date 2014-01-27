@@ -20,14 +20,9 @@
             <version>0.16.1</version>
         </dependency>
         <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>hbc-core</artifactId>
-            <version>1.4.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.7.2</version>
+            <version>1.7.5</version>
         </dependency>
     </dependencies>
 
@@ -43,7 +38,6 @@
                     <archive>
                         <manifest>
                             <mainClass>Twitter4jStreamer</mainClass>
-                            <!--<mainClass>HbcStreamer</mainClass>-->
                         </manifest>
                     </archive>
                 </configuration>
