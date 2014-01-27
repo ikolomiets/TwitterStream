@@ -55,10 +55,17 @@ public class HbcStreamer {
         //noinspection InfiniteLoopStatement
         while (true) {
             String msg = queue.take();
-            Status status = DataObjectFactory.createStatus(msg);
+            Status status;
+            try {
+                status = DataObjectFactory.createStatus(msg);
+            } catch (TwitterException e) {
+                System.out.println("Can't parse status: " + msg);
+                e.printStackTrace();
+                continue;
+            }
 
             String createdAt = dateFormat.format(status.getCreatedAt());
-            System.out.println(createdAt + " " + status.getUser().getScreenName() + ": " + status.getText());
+            System.out.println(createdAt + " @" + status.getUser().getScreenName() + ": " + status.getText());
         }
     }
 

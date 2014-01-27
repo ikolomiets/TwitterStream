@@ -15,6 +15,11 @@
             <version>[3.0,)</version>
         </dependency>
         <dependency>
+            <groupId>com.netflix.rxjava</groupId>
+            <artifactId>rxjava-core</artifactId>
+            <version>0.16.1</version>
+        </dependency>
+        <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>hbc-core</artifactId>
             <version>1.4.2</version>
@@ -37,8 +42,8 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <!--<mainClass>Twitter4jStreamer</mainClass>-->
-                            <mainClass>HbcStreamer</mainClass>
+                            <mainClass>Twitter4jStreamer</mainClass>
+                            <!--<mainClass>HbcStreamer</mainClass>-->
                         </manifest>
                     </archive>
                 </configuration>
