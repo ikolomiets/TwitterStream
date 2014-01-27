@@ -89,11 +89,11 @@ public class Twitter4jStreamer {
         String text = createdAt + " @" + status.getUser().getScreenName();
         if (status.isRetweet()) {
             Status retweetedStatus = status.getRetweetedStatus();
-            text += " RT @" + retweetedStatus.getUser().getScreenName() + ": " + retweetedStatus.getText();
+            text += " RTW @" + retweetedStatus.getUser().getScreenName() + ": " + retweetedStatus.getText();
         } else if (status.getInReplyToScreenName() != null) {
             text += " RPL @" + status.getInReplyToScreenName() + ": " + status.getText();
         } else {
-            text += ": " + status.getText();
+            text += " TWT: " + status.getText();
         }
 
         System.out.println(text);
