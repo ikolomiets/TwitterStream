@@ -58,7 +58,9 @@ public class Twitter4jStreamer {
 
                     public void onException(Exception ex) {
                         logger.error("onException", ex);
-                        observer.onError(ex);
+                        logger.info("Trying to recover...");
+                        twitterStream.filter(filterQuery);
+                        //observer.onError(ex);
                     }
 
                     @Override
