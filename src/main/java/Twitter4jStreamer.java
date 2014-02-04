@@ -3,18 +3,15 @@ import org.slf4j.impl.SimpleLoggerFactory;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
-import rx.subscriptions.Subscriptions;
-import rx.util.functions.Action0;
 import rx.util.functions.Action1;
-import rx.util.functions.Func1;
 import twitter4j.*;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Twitter4jStreamer {
 
@@ -43,65 +40,64 @@ public class Twitter4jStreamer {
         filterQuery.track(args);
         filterQuery.follow(userIds);
 
+        final List<Observer<? super Status>> observers = new CopyOnWriteArrayList<Observer<? super Status>>();
         final TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
+        twitterStream.addListener(new StatusAdapter() {
+            public void onStatus(Status status) {
+                for (Observer<? super Status> observer : observers) {
+                    observer.onNext(status);
+                }
+            }
+
+            public void onException(Exception ex) {
+                logger.error("onException", ex);
+                logger.info("Trying to recover...");
+                twitterStream.filter(filterQuery);
+            }
+
+            @Override
+            public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
+                logger.warn("onDeletionNotice: " + statusDeletionNotice.toString());
+            }
+
+            @Override
+            public void onTrackLimitationNotice(int numberOfLimitedStatuses) {
+                logger.warn("onTrackLimitationNotice: numberOfLimitedStatuses=" + numberOfLimitedStatuses);
+            }
+
+            @Override
+            public void onScrubGeo(long userId, long upToStatusId) {
+                logger.warn("onScrubGeo: userId=" + userId + ", upToStatusId=" + upToStatusId);
+            }
+
+            @Override
+            public void onStallWarning(StallWarning warning) {
+                logger.warn("onStallWarning: " + warning.toString());
+            }
+        });
+        twitterStream.filter(filterQuery);
 
         Observable<Status> statusObservable = Observable.create(new Observable.OnSubscribeFunc<Status>() {
             @Override
             public Subscription onSubscribe(final Observer<? super Status> observer) {
-                final AtomicBoolean isSubscribed = new AtomicBoolean(true);
-
-                twitterStream.addListener(new StatusAdapter() {
-                    public void onStatus(Status status) {
-                        if (isSubscribed.get())
-                            observer.onNext(status);
-                    }
-
-                    public void onException(Exception ex) {
-                        logger.error("onException", ex);
-                        logger.info("Trying to recover...");
-                        twitterStream.filter(filterQuery);
-                        //observer.onError(ex);
-                    }
-
+                observers.add(observer);
+                return new Subscription() {
                     @Override
-                    public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
-                        logger.warn("onDeletionNotice: " + statusDeletionNotice.toString());
+                    public void unsubscribe() {
+                        observers.remove(observer);
                     }
-
-                    @Override
-                    public void onTrackLimitationNotice(int numberOfLimitedStatuses) {
-                        logger.warn("onTrackLimitationNotice: numberOfLimitedStatuses=" + numberOfLimitedStatuses);
-                    }
-
-                    @Override
-                    public void onScrubGeo(long userId, long upToStatusId) {
-                        logger.warn("onScrubGeo: userId=" + userId + ", upToStatusId=" + upToStatusId);
-                    }
-
-                    @Override
-                    public void onStallWarning(StallWarning warning) {
-                        logger.warn("onStallWarning: " + warning.toString());
-                    }
-                });
-
-                twitterStream.filter(filterQuery);
-
-                return Subscriptions.create(new Action0() {
-                    @Override
-                    public void call() {
-                        isSubscribed.set(false);
-                    }
-                });
+                };
             }
         });
 
-        statusObservable.map(new Func1<Status, Status>() {
+        statusObservable.subscribe(new Action1<Status>() {
             @Override
-            public Status call(Status status) {
+            public void call(Status status) {
                 printStatus(status);
-                return status;
             }
-        }).buffer(1, TimeUnit.MINUTES).subscribe(new Action1<List<Status>>() {
+        });
+
+        statusObservable.buffer(1, TimeUnit.MINUTES).subscribe(new Action1<List<Status>>() {
             @Override
             public void call(List<Status> statuses) {
                 System.out.println("\t\t" + statuses.size() + " TPM");
