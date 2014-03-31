@@ -1,5 +1,5 @@
 import rx.Observable;
-import rx.Subscription;
+import rx.subscriptions.BooleanSubscription;
 import twitter4j.*;
 
 import java.util.concurrent.TimeUnit;
@@ -9,28 +9,31 @@ public class SampleStreamMeeter {
     public static void main(String[] args) throws TwitterException {
         final TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
 
-        Observable<Status> statusObservable = Observable.create(observer -> {
-            final StatusAdapter listener = new StatusAdapter() {
+        Observable<Status> observableStream = Observable.create((Observable.OnSubscribe<Status>) subscriber -> {
+            StatusListener listener = new StatusAdapter() {
                 public void onStatus(Status status) {
-                    observer.onNext(status);
+                    if (subscriber.isUnsubscribed())
+                        return;
+
+                    subscriber.onNext(status);
+                }
+
+                @Override
+                public void onException(Exception ex) {
+                    if (subscriber.isUnsubscribed())
+                        return;
+
+                    subscriber.onError(ex);
                 }
             };
+
+            subscriber.add(BooleanSubscription.create(() -> twitterStream.removeListener(listener)));
             twitterStream.addListener(listener);
 
             twitterStream.sample();
-
-            return new Subscription() {
-                boolean isUnsubscribed = false;
-
-                @Override
-                public void unsubscribe() {
-                    twitterStream.removeListener(listener);
-                    isUnsubscribed = false;
-                }
-            };
         });
 
-        statusObservable.buffer(1, TimeUnit.MINUTES).subscribe(statuses -> System.out.println("\t\t" + statuses.size() + " TPM"));
+        observableStream.buffer(1, TimeUnit.MINUTES).subscribe(statuses -> System.out.println("\t\t" + statuses.size() + " TPM"));
     }
 
 }

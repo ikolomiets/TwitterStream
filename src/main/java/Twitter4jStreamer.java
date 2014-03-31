@@ -2,9 +2,8 @@ import graph.Graph;
 import org.slf4j.Logger;
 import org.slf4j.impl.SimpleLoggerFactory;
 import rx.Observable;
-import rx.Observer;
-import rx.Subscription;
-import rx.util.functions.Action1;
+import rx.Subscriber;
+import rx.subscriptions.BooleanSubscription;
 import twitter4j.*;
 
 import java.text.DateFormat;
@@ -18,12 +17,12 @@ public class Twitter4jStreamer {
     private static Logger logger = new SimpleLoggerFactory().getLogger(Twitter4jStreamer.class.getName());
     private static DateFormat dateFormat = new SimpleDateFormat("HH:mm");
 
-    private static Graph<String, MentionEdge> mentionGraph = new Graph<String, MentionEdge>();
+    private static Graph<String, MentionEdge> mentionGraph = new Graph<>();
 
     public static void main(String[] args) throws TwitterException {
         Twitter twitter = TwitterFactory.getSingleton();
 
-        List<Long> userIdList = new ArrayList<Long>();
+        List<Long> userIdList = new ArrayList<>();
         for (String arg : args) {
             if (!arg.startsWith("@"))
                 continue;
@@ -42,12 +41,12 @@ public class Twitter4jStreamer {
         filterQuery.track(args);
         filterQuery.follow(userIds);
 
-        final List<Observer<? super Status>> observers = new CopyOnWriteArrayList<Observer<? super Status>>();
-        final TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
+        List<Subscriber<? super Status>> subscribers = new CopyOnWriteArrayList<>();
+        TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
         twitterStream.addListener(new StatusAdapter() {
             public void onStatus(Status status) {
-                for (Observer<? super Status> observer : observers) {
-                    observer.onNext(status);
+                for (Subscriber<? super Status> subscriber : subscribers) {
+                    subscriber.onNext(status);
                 }
             }
 
@@ -79,36 +78,20 @@ public class Twitter4jStreamer {
         });
         twitterStream.filter(filterQuery);
 
-        Observable<Status> statusObservable = Observable.create(new Observable.OnSubscribeFunc<Status>() {
-            @Override
-            public Subscription onSubscribe(final Observer<? super Status> observer) {
-                observers.add(observer);
-                return new Subscription() {
-                    @Override
-                    public void unsubscribe() {
-                        observers.remove(observer);
-                    }
-                };
-            }
+        Observable<Status> statusObservable = Observable.create((Observable.OnSubscribe<Status>) (subscriber) -> {
+            subscriber.add(BooleanSubscription.create(() -> {
+                subscribers.remove(subscriber);
+            }));
+            subscribers.add(subscriber);
         });
 
-        statusObservable.subscribe(new Action1<Status>() {
-            @Override
-            public void call(Status status) {
-                printStatus(status);
-            }
-        });
+        statusObservable.subscribe(Twitter4jStreamer::printStatus);
 
-        statusObservable.buffer(1, TimeUnit.MINUTES).subscribe(new Action1<List<Status>>() {
-            @Override
-            public void call(List<Status> statuses) {
-                System.out.println("\t\t" + statuses.size() + " TPM");
-            }
-        });
+        statusObservable.buffer(1, TimeUnit.MINUTES).subscribe(statuses -> System.out.println("\t\t" + statuses.size() + " TPM"));
     }
 
     private static void printStatus(Status status) {
-        Set<String> participants = new HashSet<String>();
+        Set<String> participants = new HashSet<>();
         participants.add(status.getUser().getScreenName());
         for (UserMentionEntity userMentionEntity : status.getUserMentionEntities())
             participants.add(userMentionEntity.getScreenName());
@@ -152,7 +135,7 @@ public class Twitter4jStreamer {
         logger.info("Vertices: " + mentionGraph.getVertices().size());
         logger.info("Edges: " + mentionGraph.getEdges().size());
 
-        final Map<String, Integer> userMentions = new HashMap<String, Integer>();
+        final Map<String, Integer> userMentions = new HashMap<>();
         for (String user : mentionGraph.getVertices()) {
             int total = 0;
             for (MentionEdge edge : mentionGraph.getAllEdgesForVertex(user))
@@ -161,17 +144,17 @@ public class Twitter4jStreamer {
             userMentions.put(user, total);
         }
 
-        Map<String, Integer> sortedUserMentions = new TreeMap<String, Integer>(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                int i = userMentions.get(o2) - userMentions.get(o1);
-                return i != 0 ? i : o1.compareTo(o2);
-            }
+        Map<String, Integer> sortedUserMentions = new TreeMap<>((String o1, String o2) -> {
+            int i = userMentions.get(o2) - userMentions.get(o1);
+            return i != 0 ? i : o1.compareTo(o2);
         });
         sortedUserMentions.putAll(userMentions);
 
-        for (String user : sortedUserMentions.keySet())
+        for (String user : sortedUserMentions.keySet()) {
+            if (sortedUserMentions.get(user) <= 1)
+                break;
             logger.info(user + " mentioned " + sortedUserMentions.get(user) + " times");
+        }
     }
 
 }
