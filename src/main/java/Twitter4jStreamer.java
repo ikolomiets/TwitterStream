@@ -46,6 +46,8 @@ public class Twitter4jStreamer {
         twitterStream.addListener(new StatusAdapter() {
             public void onStatus(Status status) {
                 for (Subscriber<? super Status> subscriber : subscribers) {
+                    if (subscriber.isUnsubscribed())
+                        return;
                     subscriber.onNext(status);
                 }
             }
