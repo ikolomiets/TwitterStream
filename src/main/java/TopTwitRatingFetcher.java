@@ -25,7 +25,7 @@ public class TopTwitRatingFetcher {
     private static final Pattern regex = Pattern.compile("<a href=\"/users/(\\w+)\" class=\"rating\">");
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        for (int i = 201; i <= 300; i++) {
+        for (int i = 1; i <= 300; i++) {
             HttpGet httpGet = new HttpGet(baseUrl + i);
             CloseableHttpResponse response = httpclient.execute(httpGet);
             String content = EntityUtils.toString(response.getEntity());
