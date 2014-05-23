@@ -20,8 +20,8 @@ import java.util.regex.Pattern;
 
 public class TopTwitRatingFetcher {
 
-    public static final String baseUrl = "http://toptwit.ru/users/?page=";
-    private static CloseableHttpClient httpclient = HttpClients.createDefault();
+    private static final CloseableHttpClient httpclient = HttpClients.createDefault();
+    private static final String baseUrl = "http://toptwit.ru/users/?page=";
     private static final Pattern regex = Pattern.compile("<a href=\"/users/(\\w+)\" class=\"rating\">");
 
     public static void main(String[] args) throws IOException, InterruptedException {
