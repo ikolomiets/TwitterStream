@@ -1,13 +1,3 @@
-/*
- * IBM Confidential
- * OCO Source Materials
- * 5725H42
- * Copyright IBM Corp. 2002, 2014
- * The source code for this program is not published or otherwise
- * divested of its trade secrets, irrespective of what has been
- * deposited with the U.S. Copyright Office.
- */
-
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
